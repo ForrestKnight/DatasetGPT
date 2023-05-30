@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <title>DatasetGPT</title>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+      <style>
+         body {
+            padding: 20px;
+            background-color: #202123;
+            color: #fafafa;
+            font-family: Arial, sans-serif;
+         }
+         #chat-log {
+            height: 60vh;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: scroll;
+            margin-bottom: 20px;
+            background-color: #444654;
+         }
+         .message {
+            margin-bottom: 10px;
+            border-radius: 5px;
+            padding: 10px;
+         }
+         .message--sent {
+            text-align: right;
+            background-color: #343541;
+            color: #dcdcdc;
+         }
+         .message--received {
+            text-align: left;
+            background-color: #444654;
+            color: #fafafa;
+         }
+         .form-control, .btn-primary {
+            background-color: #40414F;
+            color: #f0f0f0;
+            border-color: #40414F;
+         }
+      </style>
+   </head>
+   <body>
+      <main>
+         <h1>DatasetGPT</h1>
+         <div id="chat-log"></div>
+         <form action="">
+            <div class="input-group">
+               <input type="text" class="form-control" name="message" id="message" placeholder="Type a message...">
+               <div class="input-group-append">
+                  <button class="btn btn-primary" type="submit">Send</button>
+               </div>
+            </div>
+         </form>
+      </main>
+      <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+      <script>
+         let messages = []
+         const chatLog = document.getElementById('chat-log');
+         const message = document.getElementById('message');
+         const form = document.querySelector('form');
+         form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const messageText = message.value;
+            const newMessage = {"role": "user", "content": `${messageText}`};
+            messages.push(newMessage);
+            message.value = '';
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add('message--sent');
+            messageElement.innerHTML = `
+               <div class="message__text">${messageText}</div>
+            `;
+            chatLog.appendChild(messageElement);
+            chatLog.scrollTop = chatLog.scrollHeight;
+            fetch('http://localhost:3000', {
+               method: 'POST',
+               headers: {
+                  'Content-Type': 'application/json'
+               },
+               body: JSON.stringify({
+                  messages
+               })
+            })
+            .then(res => res.json())
+            .then(data => {
+               let newAssistantMessage = {"role": "assistant", "content": `${data.completion.content}`};
+               messages.push(newAssistantMessage);
+               const messageElement = document.createElement('div');
+               messageElement.classList.add('message');
+               messageElement.classList.add('message--received');
+               messageElement.innerHTML = `
+                  <div class="message__text">${data.completion.content}</div>
+               `;
+               chatLog.appendChild(messageElement);
+               chatLog.scrollTop = chatLog.scrollHeight;
+            })
+         })
+      </script>
+   </body>
+</html>
